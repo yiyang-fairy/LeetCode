@@ -15,13 +15,22 @@
 
 const canConstruct = function (ransomNote, magazine) {
   if (ransomNote.length > magazine.length) return false;
-  const n = ransomNote.length;
-  let i = 0;
-  while (i < n) {
-    ransomNote.replace(ransomNote[i], "");
-    magazine.replace(ransomNote[i], "");
-    i++;
+  let temp = magazine
+  for (let i = 0; i < ransomNote.length; i++) {
+    const char = ransomNote[i]
+    
+    if (temp.includes(char)) {
+      {
+        temp = temp.replace(char, "#")
+      }
+    } else {
+      return false
+    }
   }
-  if (ransomNote.length > 0) return false;
-  else return true;
+
+  return true
 };
+
+const ransomNote = "aa", magazine = "aab"
+
+console.log(canConstruct(ransomNote, magazine))
