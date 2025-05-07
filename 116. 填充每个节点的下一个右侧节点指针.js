@@ -32,38 +32,40 @@ struct Node {
 -1000 <= node.val <= 1000
  */
 
+class Node {
+  constructor(val, left, right, next) {
+    this.val = val;
+    this.left = left;
+    this.right = right;
+    this.next = next;
+  }
+}
 var connect = function (root) {
-  
   if (!root) {
     return null
   }
 
-  const pre = []
+  const dfs = (root) => {
+    const left = root.left
+    const right = root.right
 
-  const dfs = (node, depth) => {
-    if (!node) {
+    if (!left && !right) {
       return
     }
 
-    if (pre.length === depth) {
-      pre.push(node)
-    } else {
-      pre[depth].next = node
-      pre[depth] = node
-    }
+    left.next = right || null
 
-    dfs(node.left, depth + 1)
-    dfs(node.right, depth + 1)
+    right.next = root.next.left || null
+
+    dfs(left)
+    dfs(right)
   }
 
-  dfs(root, 0)
-
-  
-
-
-
+  dfs(root)
   return root
-
 
 };
 
+const root = new Node(1, new Node(2, new Node(4), new Node(5)), new Node(3, new Node(6), new Node(7)))
+
+console.log(connect(root))
