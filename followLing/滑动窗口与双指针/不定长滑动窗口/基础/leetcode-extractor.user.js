@@ -491,22 +491,52 @@ ${testCases}`;
     // 解析输入参数
     function parseInputParameters(inputText) {
         const params = [];
+        const processedIndices = new Set();
         
-        // 匹配数组参数 nums = [1,2,3]
-        const arrayRegex = /(\w+)\s*=\s*(\[[^\]]+\])/g;
+        // 匹配数组参数,支持多维数组 nums = [[1,2],[3,4]]
+        const arrayRegex = /(\w+)\s*=\s*(\[)/g;
         let arrayMatch;
+        
         while ((arrayMatch = arrayRegex.exec(inputText)) !== null) {
-            params.push(arrayMatch[2]);
+            const paramName = arrayMatch[1];
+            const startIndex = arrayMatch.index + arrayMatch[0].length - 1; // '[' 的位置
+            
+            // 使用栈来匹配完整的数组
+            let bracketCount = 0;
+            let endIndex = startIndex;
+            
+            for (let i = startIndex; i < inputText.length; i++) {
+                if (inputText[i] === '[') bracketCount++;
+                if (inputText[i] === ']') bracketCount--;
+                
+                if (bracketCount === 0) {
+                    endIndex = i;
+                    break;
+                }
+            }
+            
+            const arrayValue = inputText.substring(startIndex, endIndex + 1);
+            params.push(arrayValue);
+            
+            // 记录已处理的参数
+            for (let i = arrayMatch.index; i <= endIndex; i++) {
+                processedIndices.add(i);
+            }
         }
         
         // 匹配普通参数 k = 2
         const paramRegex = /(\w+)\s*=\s*([^\s,，]+)/g;
         let paramMatch;
         while ((paramMatch = paramRegex.exec(inputText)) !== null) {
+            const matchIndex = paramMatch.index;
+            
+            // 跳过已经处理的数组参数
+            if (processedIndices.has(matchIndex)) continue;
+            
             const paramName = paramMatch[1];
             const paramValue = paramMatch[2];
             
-            // 跳过已经处理的数组参数
+            // 跳过数组参数(已在上面处理)
             if (paramValue.startsWith('[')) continue;
             
             // 如果是字符串，加引号
