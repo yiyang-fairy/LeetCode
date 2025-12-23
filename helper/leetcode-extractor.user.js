@@ -406,11 +406,11 @@ ${testCases}`;
         
         if (examples.length > 0) {
             examples.forEach((example, index) => {
-                testCases.push(`console.log('测试用例${index + 1}', ${functionName}(${example.input}));  //${example.output}`);
+                testCases.push(`console.log('测试用例${index + 1}', JSON.stringify(${functionName}(${example.input})));  // ${example.output}`);
             });
         } else {
             // 如果没找到示例，生成默认测试
-            testCases.push(`console.log('测试用例1', ${functionName}());  // 期望输出`);
+            testCases.push(`console.log('测试用例1', JSON.stringify(${functionName}()));  // 期望输出`);
         }
 
         return testCases.join('\n');
@@ -539,11 +539,25 @@ ${testCases}`;
             // 跳过数组参数(已在上面处理)
             if (paramValue.startsWith('[')) continue;
             
-            // 如果是字符串，加引号
-            if (isNaN(paramValue) && !paramValue.includes('"') && !paramValue.includes("'")) {
-                params.push(`"${paramValue}"`);
-            } else {
+            // 处理布尔值
+            if (paramValue === 'true' || paramValue === 'false') {
                 params.push(paramValue);
+            }
+            // 处理null
+            else if (paramValue === 'null') {
+                params.push('null');
+            }
+            // 处理已有引号的字符串
+            else if (paramValue.startsWith('"') || paramValue.startsWith("'")) {
+                params.push(paramValue);
+            }
+            // 处理数字(包括负数)
+            else if (!isNaN(paramValue) || /^-?\d+/.test(paramValue)) {
+                params.push(paramValue);
+            }
+            // 其他情况作为字符串处理
+            else {
+                params.push(`"${paramValue}"`);
             }
         }
         
@@ -552,9 +566,49 @@ ${testCases}`;
 
     // 解析输出值
     function parseOutputValue(outputText) {
-        // 提取数字或数组
-        const match = outputText.match(/\d+|\[[^\]]+\]/);
-        return match ? match[0] : outputText.trim();
+        // 尝试匹配多维数组,使用栈来匹配完整的数组结构
+        const arrayStartIndex = outputText.indexOf('[');
+        if (arrayStartIndex !== -1) {
+            let bracketCount = 0;
+            let endIndex = arrayStartIndex;
+            
+            for (let i = arrayStartIndex; i < outputText.length; i++) {
+                if (outputText[i] === '[') bracketCount++;
+                if (outputText[i] === ']') bracketCount--;
+                
+                if (bracketCount === 0) {
+                    endIndex = i;
+                    break;
+                }
+            }
+            
+            return outputText.substring(arrayStartIndex, endIndex + 1);
+        }
+        
+        // 匹配布尔值
+        if (/\b(true|false)\b/i.test(outputText)) {
+            const boolMatch = outputText.match(/\b(true|false)\b/i);
+            return boolMatch[0].toLowerCase();
+        }
+        
+        // 匹配null
+        if (/\bnull\b/i.test(outputText)) {
+            return 'null';
+        }
+        
+        // 匹配数字(包括负数和小数)
+        const numberMatch = outputText.match(/-?\d+\.?\d*/);
+        if (numberMatch) {
+            return numberMatch[0];
+        }
+        
+        // 匹配字符串(带引号)
+        const stringMatch = outputText.match(/["']([^"']*)["']/);
+        if (stringMatch) {
+            return `"${stringMatch[1]}"`;
+        }
+        
+        return outputText.trim();
     }
 
     // 复制到剪贴板
