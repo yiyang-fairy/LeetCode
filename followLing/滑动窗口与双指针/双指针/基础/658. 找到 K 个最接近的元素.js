@@ -32,17 +32,22 @@ arr 按 升序 排列
  */
 const findClosestElements = function (arr, k, x) {
 
-  let left = 0
-  let right = k - 1
+  let i = 0
+  let j = arr.length - 1
 
-  
+  while (j - i + 1 > k) {
+    const absI = Math.abs(arr[i] - x)
+    const absJ = Math.abs(arr[j] - x)
 
-
-
-
-
-
+    if (absI > absJ) {
+      i++
+    } else {
+      j--
+    }
+  }
+  return arr.slice(i, j + 1)
 };
 
 console.log('测试用例1', findClosestElements([1, 2, 3, 4, 5], 4, 3));  //[1,2,3,4]
 console.log('测试用例2', findClosestElements([1, 1, 2, 3, 4, 5], 4, -1));  //[1,1,2,3]
+console.log('测试用例3', findClosestElements([1, 1, 1, 10, 10, 10], 1, 9));  //[1,1,2,3]
